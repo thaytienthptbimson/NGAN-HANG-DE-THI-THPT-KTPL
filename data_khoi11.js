@@ -1,50 +1,50 @@
 /* =========================================================================
-   DỮ LIỆU ĐỊA LÍ KHỐI 11 (Sách Kết nối tri thức)
+   DỮ LIỆU KTPL KHỐI 11 (Sách Kết nối tri thức)
    Bản quyền thuộc về số ĐT: 0943.930.787
 ========================================================================= */
 
 const dataKhoi11 = {
     1: {
-        title: "Chủ đề 1: Một số vấn đề Kinh tế - Xã hội Thế giới",
+        title: "Chủ đề 1, 2: Cạnh tranh, Cung - Cầu, Lạm phát, Thất nghiệp",
         exercises: {
             mcq: [
-                { type: 'mcq', text: "Chỉ tiêu HDI (Chỉ số phát triển con người) do Liên hợp quốc đưa ra dựa trên các phương diện nào?", options: ["Quy mô dân số, tỉ lệ thất nghiệp và thu nhập.", "Sức khoẻ, học vấn và thu nhập.", "Cơ cấu kinh tế, tuổi thọ và bình đẳng giới.", "Tốc độ đô thị hoá, giáo dục và GNI."], answer: 1 },
-                { type: 'mcq', text: "Tổ chức nào sau đây được thành lập với mục tiêu thiết lập và duy trì một nền thương mại toàn cầu tự do, thuận lợi và minh bạch?", options: ["Quỹ Tiền tệ Quốc tế (IMF).", "Tổ chức Thương mại Thế giới (WTO).", "Ngân hàng Thế giới (WB).", "Diễn đàn Hợp tác Kinh tế châu Á – Thái Bình Dương (APEC)."], answer: 1 },
-                { type: 'mcq', text: "Hệ quả tiêu cực lớn nhất của quá trình toàn cầu hoá kinh tế là gì?", options: ["Cản trở sự dịch chuyển của dòng vốn đầu tư.", "Gia tăng sự phân hoá trình độ phát triển kinh tế và khoảng cách giàu nghèo.", "Thu hẹp quy mô của các công ty đa quốc gia.", "Làm giảm chuyên môn hoá trong sản xuất quốc tế."], answer: 1 },
-                { type: 'mcq', text: "Vấn đề an ninh phi truyền thống nào sau đây liên quan trực tiếp đến việc đảm bảo đầy đủ năng lượng cho phát triển kinh tế - xã hội?", options: ["An ninh mạng.", "An ninh lương thực.", "An ninh năng lượng.", "An ninh hàng hải."], answer: 2 }
+                { type: 'mcq', text: "Lạm phát là tình trạng gì của nền kinh tế?", options: ["Sự giảm giá liên tục của các loại hàng hoá.", "Sự tăng mức giá chung các hàng hoá, dịch vụ một cách liên tục trong một thời gian nhất định.", "Sự gia tăng đột biến của lực lượng lao động.", "Sự ứ đọng hàng hoá không thể tiêu thụ."], answer: 1 },
+                { type: 'mcq', text: "Mức độ lạm phát phi mã được xác định khi giá cả tăng ở mức nào hằng năm?", options: ["Một con số (0% - dưới 10%).", "Hai con số trở lên (10% - 1000%).", "Vượt xa mức 1000%.", "Dưới 0%."], answer: 1 },
+                { type: 'mcq', text: "Thất nghiệp cơ cấu xảy ra do nguyên nhân nào sau đây?", options: ["Người lao động tự nguyện bỏ việc để tìm chỗ lương cao hơn.", "Gắn liền với sự biến động cơ cấu kinh tế và sự thay đổi của công nghệ.", "Nền kinh tế bước vào chu kì suy thoái toàn cầu.", "Người lao động vừa tốt nghiệp chưa kịp xin việc."], answer: 1 },
+                { type: 'mcq', text: "Trong nền kinh tế thị trường, khi lượng cung nhỏ hơn lượng cầu thì giá cả hàng hoá thường có xu hướng như thế nào?", options: ["Giảm xuống.", "Tăng lên.", "Giữ nguyên ổn định.", "Bằng với chi phí sản xuất."], answer: 1 }
             ],
             tf: [
                 { 
                     type: 'tf', 
-                    text: "Về sự khác biệt giữa các nhóm nước phát triển và đang phát triển:", 
+                    text: "Về cạnh tranh và các hiện tượng kinh tế vĩ mô:", 
                     options: [
-                        { text: "a) (Nhận biết) Các nước phát triển thường có GNI/người rất cao và cơ cấu dân số già.", answer: true },
-                        { text: "b) (Thông hiểu) Trong cơ cấu kinh tế của các nước phát triển, nhóm ngành nông, lâm, thuỷ sản luôn chiếm tỉ trọng cao nhất.", answer: false },
-                        { text: "c) (Vận dụng) Hầu hết các nước đang phát triển có tốc độ tăng GDP khá cao và đang chuyển dịch cơ cấu theo hướng công nghiệp hoá.", answer: true },
-                        { text: "d) (Vận dụng cao) Dân số già ở các nước phát triển tạo ra lợi thế lớn về nguồn lao động giá rẻ để cạnh tranh với các nước đang phát triển.", answer: false }
+                        { text: "a) (Nhận biết) Cạnh tranh tạo động lực thúc đẩy lực lượng sản xuất phát triển và hoàn thiện nền kinh tế thị trường.", answer: true },
+                        { text: "b) (Thông hiểu) Lạm phát tăng cao luôn luôn mang lại lợi ích cho người tiêu dùng vì họ mua được nhiều hàng hoá hơn.", answer: false },
+                        { text: "c) (Vận dụng) Khi chi phí sản xuất (giá xăng dầu, nguyên vật liệu) tăng cao đột biến sẽ đẩy giá thành sản phẩm lên, dẫn đến nguy cơ lạm phát chi phí đẩy.", answer: true },
+                        { text: "d) (Vận dụng cao) Thất nghiệp tự nguyện là hiện tượng sinh viên ra trường từ chối đi làm vì mức lương và điều kiện công việc chưa đáp ứng được kì vọng của bản thân.", answer: true }
                     ]
                 }
             ]
         }
     },
     2: {
-        title: "Chủ đề 2: Khu vực Đông Nam Á & Tây Nam Á",
+        title: "Chủ đề 7, 8: Bình đẳng trước pháp luật & Quyền dân chủ",
         exercises: {
             mcq: [
-                { type: 'mcq', text: "Đặc điểm địa hình nổi bật nhất của khu vực Đông Nam Á hải đảo là gì?", options: ["Gồm các dải đồng bằng châu thổ rộng lớn, phì nhiêu.", "Chủ yếu là núi trẻ với nhiều núi lửa, đồng bằng nhỏ hẹp ven biển.", "Là các khối sơn nguyên đồ sộ xen kẽ hoang mạc.", "Địa hình bằng phẳng, ít bị chia cắt."], answer: 1 },
-                { type: 'mcq', text: "Năm 2020, khu vực Đông Nam Á có quy mô dân số là bao nhiêu?", options: ["Khoảng 402,5 triệu người.", "Khoảng 525,0 triệu người.", "Khoảng 668,4 triệu người.", "Khoảng 768,0 triệu người."], answer: 2 },
-                { type: 'mcq', text: "Tài nguyên khoáng sản quan trọng nhất, mang lại nguồn thu ngoại tệ khổng lồ cho các quốc gia Tây Nam Á là gì?", options: ["Than đá và quặng sắt.", "Dầu mỏ và khí tự nhiên.", "Vàng và kim cương.", "Thiếc và bô-xít."], answer: 1 },
-                { type: 'mcq', text: "Đâu là ba trụ cột chính của Cộng đồng ASEAN được thiết lập năm 2015?", options: ["Chính trị - An ninh, Kinh tế, Văn hoá - Xã hội.", "Kinh tế, Giáo dục, Y tế.", "Ngoại giao, Quân sự, Thương mại.", "Tài chính, Môi trường, Nhân quyền."], answer: 0 }
+                { type: 'mcq', text: "Mọi công dân có hành vi vi phạm pháp luật đều phải chịu trách nhiệm pháp lí mà không phân biệt giới tính, dân tộc, tôn giáo. Điều này thể hiện nguyên tắc nào?", options: ["Bình đẳng về quyền.", "Bình đẳng về nghĩa vụ.", "Bình đẳng về trách nhiệm pháp lí.", "Bình đẳng trong kinh tế."], answer: 2 },
+                { type: 'mcq', text: "Theo Luật Bình đẳng giới, nam và nữ bình đẳng về độ tuổi đi học, đào tạo, bồi dưỡng thuộc lĩnh vực nào?", options: ["Lĩnh vực lao động.", "Lĩnh vực chính trị.", "Lĩnh vực giáo dục và đào tạo.", "Lĩnh vực kinh tế."], answer: 2 },
+                { type: 'mcq', text: "Đảm bảo tỉ lệ người dân tộc thiểu số thích đáng được giới thiệu ứng cử đại biểu Quốc hội là thể hiện sự bình đẳng giữa các dân tộc trên lĩnh vực nào?", options: ["Kinh tế.", "Chính trị.", "Văn hoá.", "Giáo dục."], answer: 1 },
+                { type: 'mcq', text: "Quyền bất khả xâm phạm về thân thể của công dân có nghĩa là không ai bị bắt nếu không có quyết định hoặc sự phê chuẩn của cơ quan nào?", options: ["Uỷ ban nhân dân cấp xã.", "Cơ quan báo chí.", "Toà án nhân dân hoặc Viện kiểm sát nhân dân.", "Tổ chức công đoàn cơ sở."], answer: 2 }
             ],
             tf: [
                 { 
                     type: 'tf', 
-                    text: "Về đặc điểm kinh tế - xã hội của khu vực Tây Nam Á:", 
+                    text: "Về bình đẳng giới và bình đẳng giữa các dân tộc:", 
                     options: [
-                        { text: "a) (Nhận biết) Tây Nam Á là nơi khởi nguồn của ba tôn giáo lớn: Do Thái giáo, Ki-tô giáo và Hồi giáo.", answer: true },
-                        { text: "b) (Thông hiểu) Do điều kiện khí hậu nóng ẩm, nông nghiệp trồng lúa nước là ngành kinh tế chủ đạo của mọi quốc gia Tây Nam Á.", answer: false },
-                        { text: "c) (Vận dụng) Sự phân bố tài nguyên dầu mỏ không đều là một trong những nguyên nhân gây ra sự chênh lệch trình độ phát triển giữa các nước trong khu vực.", answer: true },
-                        { text: "d) (Vận dụng cao) Việc phụ thuộc quá lớn vào xuất khẩu dầu mỏ khiến nền kinh tế Tây Nam Á thiếu ổn định khi giá dầu thế giới biến động, buộc nhiều nước phải chuyển hướng sang kinh tế tri thức.", answer: true }
+                        { text: "a) (Nhận biết) Vợ, chồng có quyền và nghĩa vụ ngang nhau trong sở hữu tài sản chung của gia đình.", answer: true },
+                        { text: "b) (Thông hiểu) Doanh nghiệp đăng thông báo tuyển dụng chỉ nhận nam giới vào vị trí kĩ sư điều hành là hoàn toàn hợp pháp và không vi phạm bình đẳng giới trong lao động.", answer: false },
+                        { text: "c) (Vận dụng) Nhà nước thực hiện chính sách cộng điểm ưu tiên trong tuyển sinh đại học cho thí sinh người dân tộc thiểu số là nhằm tạo ra sự bình đẳng về cơ hội học tập.", answer: true },
+                        { text: "d) (Vận dụng cao) Thực hiện bình đẳng giữa các dân tộc là cơ sở vững chắc để củng cố khối đại đoàn kết toàn dân tộc, góp phần làm thất bại âm mưu chia rẽ của các thế lực thù địch.", answer: true }
                     ]
                 }
             ]

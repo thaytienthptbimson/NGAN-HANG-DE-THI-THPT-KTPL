@@ -3,10 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Ngân hàng câu hỏi ôn thi tốt nghiệp THPT môn Giáo dục Kinh tế và Pháp luật 2026">
     <title>ÔN THI TỐT NGHIỆP THPT MÔN KTPL 2026</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%96%EF%B8%8F%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #f4f7f9; }
+        body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background-color: #f4f7f9; }
         .hidden-element { display: none !important; }
         .question-box { transition: all 0.2s ease-in-out; }
         .question-box:hover { box-shadow: 0 6px 16px rgba(139, 92, 246, 0.08); border-color: #ddd6fe; transform: translateY(-1px); }
@@ -20,23 +25,30 @@
         .wrong-ans-text { color: #991b1b !important; }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #a78bfa; border-radius: 10px; }
+        .no-scrollbar { scrollbar-width: none; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
         /* Tông màu Tím/Xanh Dương phù hợp môn Pháp luật/Kinh tế */
         .glass-header { background: linear-gradient(90deg, #4c1d95 0%, #6d28d9 50%, #4c1d95 100%); box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
+        nav button:focus-visible, #submit-btn:focus-visible { outline: 3px solid #c4b5fd; outline-offset: 2px; }
+        @media (prefers-reduced-motion: reduce) {
+            .question-box, .option-label { transition: none; }
+            .question-box:hover { transform: none; }
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col text-gray-800">
     <!-- Header -->
     <header class="glass-header text-white sticky top-0 z-40 h-[64px] flex items-center">
-        <div class="max-w-[1500px] w-full mx-auto px-4 flex justify-between items-center">
-            <div class="flex space-x-2">
-                <button onclick="selectSection('khoi10')" id="tab-khoi10" class="px-5 py-2 bg-white/20 hover:bg-white/90 hover:text-violet-900 font-semibold rounded-md text-sm transition-colors">LỚP 10</button>
-                <button onclick="selectSection('khoi11')" id="tab-khoi11" class="px-5 py-2 bg-white/20 hover:bg-white/90 hover:text-violet-900 font-semibold rounded-md text-sm transition-colors">LỚP 11</button>
-                <button onclick="selectSection('khoi12')" id="tab-khoi12" class="px-5 py-2 bg-gray-50 text-violet-900 font-bold rounded-md shadow-sm text-sm transition-colors">LỚP 12</button>
-                <button onclick="selectSection('mocktest')" id="tab-mocktest" class="px-5 py-2 bg-white/20 hover:bg-white/90 hover:text-violet-900 font-semibold rounded-md text-sm transition-colors">ĐỀ THI THỬ</button>
-            </div>
-            <h1 class="text-lg font-bold uppercase tracking-wider hidden md:block truncate px-4 drop-shadow-md">HỆ THỐNG CÂU HỎI VÀ NGÂN HÀNG ĐỀ THI TN MÔN - GDKT & PL 2026</h1>
-            <div class="text-lg font-black bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-lg border border-white/30 shadow-inner flex-shrink-0 flex items-center gap-2" id="timer-display">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <div class="max-w-[1500px] w-full mx-auto px-3 sm:px-4 flex justify-between items-center gap-2">
+            <nav class="flex space-x-2 overflow-x-auto no-scrollbar min-w-0 py-1" aria-label="Chọn khối lớp">
+                <button onclick="selectSection('khoi10')" id="tab-khoi10" class="whitespace-nowrap px-3 sm:px-5 py-2 bg-white/20 hover:bg-white/90 hover:text-violet-900 font-semibold rounded-md text-sm transition-colors">LỚP 10</button>
+                <button onclick="selectSection('khoi11')" id="tab-khoi11" class="whitespace-nowrap px-3 sm:px-5 py-2 bg-white/20 hover:bg-white/90 hover:text-violet-900 font-semibold rounded-md text-sm transition-colors">LỚP 11</button>
+                <button onclick="selectSection('khoi12')" id="tab-khoi12" class="whitespace-nowrap px-3 sm:px-5 py-2 bg-gray-50 text-violet-900 font-bold rounded-md shadow-sm text-sm transition-colors">LỚP 12</button>
+                <button onclick="selectSection('mocktest')" id="tab-mocktest" class="whitespace-nowrap px-3 sm:px-5 py-2 bg-white/20 hover:bg-white/90 hover:text-violet-900 font-semibold rounded-md text-sm transition-colors">ĐỀ THI THỬ</button>
+            </nav>
+            <h1 class="text-lg font-bold uppercase tracking-wider hidden xl:block truncate px-4 drop-shadow-md">Ngân hàng GDKT & PL 2026</h1>
+            <div class="text-base sm:text-lg font-black bg-white/20 backdrop-blur-md px-3 sm:px-4 py-1.5 rounded-lg border border-white/30 shadow-inner flex-shrink-0 flex items-center gap-2" id="timer-display" role="timer" aria-label="Thời gian còn lại">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
                 </svg>
                 50:00
@@ -44,12 +56,15 @@
         </div>
     </header>
 
+    <!-- Cảnh báo khi thiếu file JS -->
+    <div id="load-error" class="hidden-element bg-red-50 border-b border-red-300 text-red-800 text-sm font-medium px-4 py-3 text-center" role="alert"></div>
+
     <!-- Main Content Layout -->
     <div class="max-w-[1500px] mx-auto w-full flex-grow flex flex-col lg:flex-row p-4 gap-6 items-start mt-4 mb-8">
         <!-- Sidebar -->
         <aside class="w-full lg:w-[320px] flex-shrink-0 bg-white rounded-2xl shadow-sm border border-gray-200 lg:sticky lg:top-[85px] z-20 overflow-hidden">
             <div class="bg-violet-50/80 p-4 border-b border-gray-200 flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-violet-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-violet-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                 </svg>
                 <h2 class="text-base font-bold text-violet-900 uppercase tracking-wide" id="sidebar-title">Danh mục</h2>
@@ -60,19 +75,19 @@
         <!-- Main Workspace -->
         <main class="w-full flex-grow min-w-0 bg-white rounded-2xl shadow-sm border border-gray-200 p-5 md:p-8 relative">
             <!-- Welcome Screen -->
-            <div id="welcome-screen" class="text-center py-20 flex flex-col items-center justify-center h-full">
+            <div id="welcome-screen" class="text-center py-20 flex flex-col items-center justify-center">
                 <div class="bg-violet-50 p-6 rounded-full mb-6">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                     </svg>
                 </div>
                 <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-3">Hệ thống Luyện thi Tốt nghiệp THPT môn KTPL</h2>
                 <p class="text-gray-600 font-medium text-base mb-4 max-w-lg">Phần mềm cung cấp 2 dạng bài tập bám sát cấu trúc đề thi Giáo dục Kinh tế và Pháp luật mới nhất: Trắc nghiệm khách quan & Trắc nghiệm Đúng/Sai.</p>
                 <div class="inline-flex items-center gap-2 bg-violet-50 text-violet-700 px-4 py-2 rounded-lg text-sm font-medium border border-violet-100">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clip-rule="evenodd" />
                     </svg>
-                    Vui lòng chọn khối lớp hoặc đề thi thử ở menu bên trái để bắt đầu.
+                    Chọn khối lớp hoặc đề thi thử ở thanh phía trên, rồi chọn bài trong danh mục để bắt đầu.
                 </div>
             </div>
 
@@ -82,7 +97,7 @@
                     <div>
                         <h2 class="text-2xl md:text-3xl font-bold text-violet-900" id="current-test-title">Đề thi</h2>
                         <p class="text-sm text-fuchsia-700 mt-1 font-semibold flex items-center gap-1" id="current-test-subtitle">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             Định dạng mới 2026
@@ -92,7 +107,7 @@
                 <div id="questions-container" class="space-y-8"></div>
                 <div class="mt-10 pt-8 border-t border-gray-200 flex justify-center">
                     <button onclick="submitTest()" id="submit-btn" class="bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-12 text-lg rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                         </svg>
                         NỘP BÀI & XEM ĐIỂM
@@ -103,7 +118,7 @@
             <!-- Result Screen -->
             <div id="result-screen" class="hidden-element text-center py-10">
                 <div class="inline-block bg-green-100 p-4 rounded-full mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
                 </div>
@@ -123,22 +138,35 @@
     <!-- Footer Copyright -->
     <footer class="mt-auto bg-white border-t border-gray-200 py-5">
         <div class="max-w-[1500px] mx-auto px-4 text-center">
-            <p class="text-sm md:text-base font-semibold text-gray-700 flex items-center justify-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-violet-600" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zm0-9a1 1 0 011 1v3.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 111.414-1.414L9 11.586V8a1 1 0 011-1z" clip-rule="evenodd" />
-                </svg>
-                Bản quyền thuộc về thầy Phạm Văn Tiến - GV Trường THPT Bỉm Sơn
+            <p class="text-sm md:text-base font-semibold text-gray-700">
+                <span class="text-violet-600" aria-hidden="true">&copy;</span>
+                Bản quyền thuộc về thầy Phạm Văn Tiến - GV Trường THPT Lê Hồng Phong
             </p>
         </div>
     </footer>
 
+    <!-- Báo lỗi khi file JS bị thiếu / sai đường dẫn (phải đặt TRƯỚC các thẻ script bên dưới) -->
+    <script>
+        var __failedScripts = [];
+        function reportScriptError(el) {
+            var name = el.getAttribute('src');
+            if (__failedScripts.indexOf(name) === -1) __failedScripts.push(name);
+            var box = document.getElementById('load-error');
+            if (!box) return;
+            box.textContent = 'Không tải được: ' + __failedScripts.join(', ') +
+                '. Hãy đặt các file này cùng thư mục với index.html và kiểm tra đúng tên file (phân biệt chữ hoa/thường).';
+            box.classList.remove('hidden-element');
+        }
+    </script>
+
     <!-- NẠP DỮ LIỆU CÁC KHỐI KTPL -->
-    <script src="data_khoi10.js"></script>
-    <script src="data_khoi11.js"></script>
-    <script src="data_khoi12.js"></script>
-    <script src="data_mocktest.js"></script>
-    
+    <script src="data_khoi10.js" onerror="reportScriptError(this)"></script>
+    <script src="data_khoi11.js" onerror="reportScriptError(this)"></script>
+    <script src="data_khoi12.js" onerror="reportScriptError(this)"></script>
+    <script src="data_mocktest.js" onerror="reportScriptError(this)"></script>
+
     <!-- FILE XỬ LÝ LOGIC CHÍNH -->
-    <script src="app.js"></script>
+    <script src="app.js" onerror="reportScriptError(this)"></script>
+
 </body>
 </html>
