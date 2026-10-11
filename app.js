@@ -1,332 +1,409 @@
 /* =========================================================================
-   FILE XỬ LÝ LOGIC CHÍNH (app.js)
-   Hệ thống Luyện thi Tốt nghiệp THPT môn GDKT&PL 2026
+   APP.JS - LOGIC CHÍNH (gộp dữ liệu, sidebar, làm bài, chấm điểm, đồng hồ)
+   Yêu cầu nạp trước: data_khoi10.js, data_khoi11.js, data_khoi12.js,
+                      data_extra.js, data_mocktest.js
 ========================================================================= */
 
-// Đảm bảo appDatabase tồn tại để tiếp nhận dữ liệu từ các file data_*.js
-window.appDatabase = window.appDatabase || {
-    khoi10: {},
-    khoi11: {},
-    khoi12: {},
+/* ---------- 1. GỘP DỮ LIỆU TỪ CÁC FILE ---------- */
+const safe = (v) => (typeof v !== 'undefined' ? v : {});
+
+const appDatabase = {
+    mocktestMeta: {},
+    khoi10: { ...safe(typeof dataKhoi10 !== 'undefined' ? dataKhoi10 : undefined) },
+    khoi11: { ...safe(typeof dataKhoi11 !== 'undefined' ? dataKhoi11 : undefined) },
+    khoi12: { ...safe(typeof dataKhoi12 !== 'undefined' ? dataKhoi12 : undefined) },
     mocktest: {}
 };
 
-// Nối dữ liệu từ các file data_*.js (khai báo const dataKhoi10/11/12, dataMocktest) vào appDatabase
-if (typeof dataKhoi10 !== 'undefined') window.appDatabase.khoi10 = dataKhoi10;
-if (typeof dataKhoi11 !== 'undefined') window.appDatabase.khoi11 = dataKhoi11;
-if (typeof dataKhoi12 !== 'undefined') window.appDatabase.khoi12 = dataKhoi12;
-if (typeof dataMocktest !== 'undefined') window.appDatabase.mocktest = dataMocktest;
+if (typeof dataExtra !== 'undefined') {
+    ['khoi11', 'khoi12'].forEach(k => {
+        Object.keys(dataExtra[k] || {}).forEach(id => {
+            if (appDatabase[k][id]) console.warn(`[Trùng chỉ số] ${k}[${id}] đã tồn tại, bỏ qua dữ liệu bổ sung.`);
+            else appDatabase[k][id] = dataExtra[k][id];
+        });
+    });
+}
 
-let currentSection = 'khoi12'; 
-let currentTopicId = null;
-let currentExerciseType = null; 
-let timerInterval = null;
-let timeLeft = 0;
-let isSubmitted = false;
+// Đề thi thử: lấy từ data_mocktest.js, bỏ đề rỗng và đề trùng nội dung với đề trước
+(function buildMocktest() {
+    const seen = new Set();
+    const merged = { ...(typeof dataMocktest !== 'undefined' ? dataMocktest : {}) };
+    if (typeof dataExtra !== 'undefined') {
+        Object.keys(dataExtra.mocktest || {}).forEach(id => {
+            if (!merged[id] || merged[id].length === 0) merged[id] = dataExtra.mocktest[id];
+        });
+    }
+    // Đề theo cấu trúc chính thức 2026 (18 TN + 4 Đ/S + 6 trả lời ngắn)
+    appDatabase.mocktestMeta = {};
+    if (typeof dataMocktest2026 !== 'undefined') {
+        Object.keys(dataMocktest2026).forEach(id => {
+            merged[id] = dataMocktest2026[id].questions;
+            appDatabase.mocktestMeta[id] = dataMocktest2026[id].label;
+        });
+    }
+    // Đề mới (có biểu đồ) ghi đè đề cùng số trong data_mocktest.js
+    if (typeof dataMocktestNew !== 'undefined') {
+        Object.keys(dataMocktestNew).forEach(id => { merged[id] = dataMocktestNew[id]; });
+    }
+    Object.keys(merged).sort((a, b) => a - b).forEach(id => {
+        const arr = merged[id];
+        if (!Array.isArray(arr) || arr.length === 0) return;
+        const sig = JSON.stringify(arr);
+        if (seen.has(sig)) { console.warn(`[Đề trùng] Đề ${id} giống hệt đề trước, đã ẩn.`); return; }
+        seen.add(sig);
+        appDatabase.mocktest[id] = arr;
+    });
+})();
 
-document.addEventListener('DOMContentLoaded', () => { 
-    selectSection('khoi12'); 
-});
+/* ---------- 2. TRẠNG THÁI ---------- */
+const MOCK_SECONDS = 50 * 60;
+let state = { section: null, key: null, questions: [], submitted: false };
+let timerId = null;
+let secondsLeft = MOCK_SECONDS;
+let secondsElapsed = 0;
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+/* ---------- 3. TAB + SIDEBAR ---------- */
+const TAB_ACTIVE = 'px-5 py-2 bg-gray-50 text-emerald-800 font-bold rounded-md shadow-sm text-sm transition-colors';
+const TAB_IDLE = 'px-5 py-2 bg-white/20 hover:bg-white/90 hover:text-emerald-800 font-semibold rounded-md text-sm transition-colors';
 
 function selectSection(section) {
-    currentSection = section;
-    clearInterval(timerInterval);
-    const tabs = ['khoi10', 'khoi11', 'khoi12', 'mocktest'];
-    tabs.forEach(t => {
-        const tab = document.getElementById('tab-' + t);
-        if(tab) {
-            tab.className = t === section 
-                ? "whitespace-nowrap px-3 sm:px-5 py-2 bg-gray-50 text-violet-900 font-bold rounded-md shadow-sm text-sm transition-colors"
-                : "whitespace-nowrap px-3 sm:px-5 py-2 bg-white/20 hover:bg-white/90 hover:text-violet-900 font-semibold rounded-md text-sm transition-colors";
-        }
+    stopTimer();
+    ['khoi10', 'khoi11', 'khoi12', 'mocktest'].forEach(s => {
+        const el = $('tab-' + s);
+        if (el) el.className = (s === section) ? TAB_ACTIVE : TAB_IDLE;
     });
-
-    let title = section === 'mocktest' ? "NGÂN HÀNG ĐỀ THI THỬ" : `NGÂN HÀNG CÂU HỎI LỚP ${section.replace('khoi', '')}`;
-    document.getElementById('sidebar-title').innerText = title;
-    
-    renderSidebar();
-    document.getElementById('test-screen').classList.add('hidden-element');
-    document.getElementById('result-screen').classList.add('hidden-element');
-    document.getElementById('welcome-screen').classList.remove('hidden-element');
+    state = { section, key: null, questions: [], submitted: false };
+    showScreen('welcome');
+    renderSidebar(section);
 }
 
-function renderSidebar() {
-    const container = document.getElementById('sidebar-container');
-    container.innerHTML = '';
-
-    if (currentSection.startsWith('khoi')) {
-        const topics = Object.keys(window.appDatabase[currentSection]);
-        if(topics.length === 0) {
-            container.innerHTML = `<div class="p-4 text-sm text-gray-500 italic text-center">Dữ liệu đang được cập nhật...</div>`;
-            return;
-        }
-
-        topics.forEach(topicId => {
-            const topic = window.appDatabase[currentSection][topicId];
-            const div = document.createElement('div');
-            div.className = 'border-b border-gray-200';
-            div.innerHTML = `
-                <div class="px-4 py-3 font-bold text-gray-700 cursor-pointer flex justify-between items-center hover:bg-violet-50 transition-colors" onclick="toggleSidebarMenu('menu-${currentSection}-${topicId}')">
-                    <span>${topic.title}</span> <span class="text-[10px] text-gray-400 transition-transform duration-200" id="icon-${currentSection}-${topicId}">▼</span>
-                </div>
-                <div id="menu-${currentSection}-${topicId}" class="flex flex-col bg-white border-t border-gray-100 hidden-element">
-                    <button onclick="startTest('${currentSection}', ${topicId}, 'mcq')" class="text-left px-6 py-3 text-sm border-b border-gray-50 hover:bg-violet-50 text-gray-600 hover:text-violet-700 transition-colors">Luyện Trắc nghiệm (Nhiều lựa chọn)</button>
-                    <button onclick="startTest('${currentSection}', ${topicId}, 'tf')" class="text-left px-6 py-3 text-sm border-b border-gray-50 hover:bg-violet-50 text-gray-600 hover:text-violet-700 transition-colors">Luyện Đúng/Sai</button>
-                    <button onclick="startTest('${currentSection}', ${topicId}, 'test')" class="text-left px-6 py-3 text-sm border-b border-gray-50 hover:bg-violet-50 font-semibold text-fuchsia-600 hover:text-fuchsia-700 transition-colors">Bài kiểm tra Đơn vị</button>
-                </div>
-            `;
-            container.appendChild(div);
-        });
-    } else {
-        const div = document.createElement('div');
-        div.className = 'flex flex-col bg-white';
-        for (let t = 1; t <= 10; t++) {
-            let hasData = window.appDatabase.mocktest[t] && window.appDatabase.mocktest[t].length > 0;
-            let label = hasData ? `Đề thi thử Tốt nghiệp số ${t}` : `Đề thi thử Tốt nghiệp số ${t} (Đang cập nhật)`;
-            let onClick = hasData ? `onclick="startTest('mocktest', null, ${t})"` : `onclick="alert('Đề thi này đang được cập nhật dữ liệu!')"`;
-            let textClass = hasData ? `font-semibold text-gray-700 hover:text-violet-800` : `text-gray-400 cursor-not-allowed`;
-            div.innerHTML += `<button ${onClick} class="text-left px-6 py-4 text-sm hover:bg-violet-50 border-b border-gray-100 transition-colors ${textClass}">${label}</button>`;
-        }
-        container.appendChild(div);
-    }
-}
-
-function toggleSidebarMenu(id) {
-    const el = document.getElementById(id);
-    el.classList.toggle('hidden-element');
-    const icon = document.getElementById(id.replace('menu-', 'icon-'));
-    if(icon) {
-        if(el.classList.contains('hidden-element')) icon.style.transform = 'rotate(0deg)';
-        else icon.style.transform = 'rotate(180deg)';
-    }
-}
-
-function startTest(section, topicId, exerciseType) {
-    currentSection = section; 
-    currentTopicId = topicId; 
-    currentExerciseType = exerciseType; 
-    isSubmitted = false;
-
-    document.getElementById('welcome-screen').classList.add('hidden-element');
-    document.getElementById('result-screen').classList.add('hidden-element');
-    document.getElementById('test-screen').classList.remove('hidden-element');
-    document.getElementById('submit-btn').classList.remove('hidden-element');
-    
-    if (section.startsWith('khoi')) {
-        let typeStr = exerciseType === 'mcq' ? "Luyện Trắc nghiệm" : (exerciseType === 'tf' ? "Luyện Đúng/Sai" : "Bài kiểm tra Đơn vị");
-        document.getElementById('current-test-title').innerText = `${window.appDatabase[section][topicId].title}`;
-        document.getElementById('current-test-subtitle').innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg> ${typeStr}
-        `;
-        resetTimer(45); 
-    } else {
-        document.getElementById('current-test-title').innerText = `Đề thi thử Tốt nghiệp THPT 2026 - Đề số ${exerciseType}`;
-        document.getElementById('current-test-subtitle').innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg> Môn: Giáo dục Kinh tế và Pháp luật (4 Mức độ Nhận thức)
-        `;
-        resetTimer(50); 
-    }
-    renderTestContent();
-    startTimer();
-}
-
-function renderTestContent() {
-    const container = document.getElementById('questions-container');
-    container.innerHTML = '';
-    
-    let questions = [];
-    if (currentSection.startsWith('khoi')) {
-        const topicData = window.appDatabase[currentSection][currentTopicId];
-        if (topicData && topicData.exercises) {
-            if (currentExerciseType === 'test') {
-                // Tự động gộp dữ liệu mà không cần tạo mảng riêng trong file data
-                questions = [
-                    ...(topicData.exercises.mcq || []),
-                    ...(topicData.exercises.tf || [])
-                ];
-            } else {
-                questions = topicData.exercises[currentExerciseType] || [];
-            }
-        }
-    } else {
-        questions = window.appDatabase.mocktest[currentExerciseType] || [];
-    }
-
-    if (questions.length === 0) {
-        container.innerHTML = `<div class="bg-gray-50 rounded-2xl py-12 text-center border-2 border-dashed border-gray-300"><p class="text-gray-500 font-bold text-lg">Đang cập nhật câu hỏi cho phần này...</p></div>`;
-        document.getElementById('submit-btn').classList.add('hidden-element'); 
-        clearInterval(timerInterval);
+function renderSidebar(section) {
+    const box = $('sidebar-container');
+    const titles = { khoi10: 'Địa lí 10', khoi11: 'Địa lí 11', khoi12: 'Địa lí 12', mocktest: 'Đề thi thử' };
+    $('sidebar-title').textContent = titles[section] || 'Danh mục';
+    const data = appDatabase[section] || {};
+    const ids = Object.keys(data).sort((a, b) => a - b);
+    if (ids.length === 0) {
+        box.innerHTML = '<p class="p-4 text-sm text-gray-500">Chưa có dữ liệu.</p>';
         return;
     }
+    box.innerHTML = ids.map(id => {
+        let label, sub;
+        if (section === 'mocktest') {
+            const qs = data[id];
+            const m = qs.filter(q => q.type === 'mcq').length, t = qs.filter(q => q.type === 'tf').length, a = qs.filter(q => q.type === 'sa').length;
+            label = (appDatabase.mocktestMeta && appDatabase.mocktestMeta[id]) || `Đề thi thử số ${id}`;
+            sub = `${m} trắc nghiệm • ${t} Đúng/Sai` + (a ? ` • ${a} trả lời ngắn` : '') + ' • 50 phút';
+        } else {
+            const ex = data[id].exercises || {};
+            label = data[id].title || `Chủ đề ${id}`;
+            sub = `${(ex.mcq || []).length} câu trắc nghiệm • ${(ex.tf || []).length} câu Đúng/Sai`;
+        }
+        return `<button data-id="${id}" onclick="loadTest('${section}','${id}')"
+            class="side-item w-full text-left p-3 mb-2 bg-white border border-gray-200 rounded-xl hover:border-emerald-300 hover:bg-emerald-50 transition">
+            <div class="font-semibold text-sm text-emerald-900">${esc(label)}</div>
+            <div class="text-xs text-gray-500 mt-1">${sub}</div></button>`;
+    }).join('');
+}
 
-    let html = '';
-    let phan1Html = '';
-    let phan2Html = '';
-    let mcqCounter = 1;
-    let tfCounter = 1;
+function markActiveSidebar(id) {
+    document.querySelectorAll('.side-item').forEach(b => {
+        const on = b.dataset.id === String(id);
+        b.classList.toggle('bg-emerald-100', on);
+        b.classList.toggle('border-emerald-500', on);
+    });
+}
 
-    questions.forEach((q, index) => {
+/* ---------- 4. MÀN HÌNH ---------- */
+function showScreen(name) {
+    $('welcome-screen').classList.toggle('hidden-element', name !== 'welcome');
+    $('test-screen').classList.toggle('hidden-element', name === 'welcome');
+    $('result-screen').classList.toggle('hidden-element', name !== 'result');
+    $('submit-btn').classList.toggle('hidden-element', name === 'result');
+    if (name === 'welcome') $('timer-display').lastChild.textContent = ' 50:00';
+}
+
+/* ---------- 5. LOAD ĐỀ + RENDER ---------- */
+function loadTest(section, key) {
+    stopTimer();
+    const data = appDatabase[section][key];
+    let qs;
+    if (section === 'mocktest') qs = data;
+    else qs = [...(data.exercises.mcq || []), ...(data.exercises.tf || [])];
+
+    state = { section, key, questions: qs, submitted: false };
+    $('current-test-title').textContent = section === 'mocktest' ? ((appDatabase.mocktestMeta && appDatabase.mocktestMeta[key]) || `Đề thi thử số ${key}`) : data.title;
+    $('current-test-subtitle').lastChild.textContent = section === 'mocktest'
+        ? ' Định dạng mới 2026 • Làm bài trong 50 phút'
+        : ' Luyện tập theo chủ đề • Không giới hạn thời gian';
+
+    renderQuestions(qs);
+    showScreen('test');
+    markActiveSidebar(key);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if (section === 'mocktest') { secondsLeft = MOCK_SECONDS; startTimer(true); }
+    else { secondsElapsed = 0; startTimer(false); }
+}
+
+function renderQuestions(qs) {
+    const total = { mcq: 0, tf: 0, sa: 0 };
+    qs.forEach(q => { total[q.type] = (total[q.type] || 0) + 1; });
+    const HEAD = {
+        mcq: ['PHẦN I', n => `Thí sinh trả lời từ câu 1 đến câu ${n}. Mỗi câu hỏi thí sinh chỉ chọn một phương án.`],
+        tf: ['PHẦN II', n => `Thí sinh trả lời từ câu 1 đến câu ${n}. Trong mỗi ý a), b), c), d) ở mỗi câu, thí sinh chọn đúng hoặc sai.`],
+        sa: ['PHẦN III', n => `Thí sinh trả lời từ câu 1 đến câu ${n}. Nhập đáp án là một số (có thể dùng dấu phẩy hoặc dấu chấm thập phân).`]
+    };
+    const nl = (t) => esc(t).replace(/\n/g, '<br>');
+    const cnt = { mcq: 0, tf: 0, sa: 0 };
+    let lastType = null;
+
+    $('questions-container').innerHTML = qs.map((q, i) => {
+        let head = '';
+        if (q.type !== lastType) {
+            lastType = q.type;
+            const h = HEAD[q.type];
+            head = `<div class="pt-2"><h3 class="text-lg font-bold text-emerald-800 uppercase">${h[0]}</h3><p class="text-sm text-gray-600 italic">${h[1](total[q.type])}</p></div>`;
+        }
+        cnt[q.type]++;
+        const n = cnt[q.type];
+        const media = renderCharts(q.charts || (q.chart ? [q.chart] : [])) + renderTables(q.tables || []);
+
         if (q.type === 'mcq') {
-            const labels = ['A', 'B', 'C', 'D'];
-            let optionsHtml = '';
-            q.options.forEach((opt, oIdx) => {
-                optionsHtml += `
-                    <label class="option-label flex items-start space-x-3 p-4 rounded-xl border border-gray-200 bg-gray-50/50 w-full cursor-pointer" id="box_q_${index}_opt_${oIdx}">
-                        <input type="radio" name="q_${index}" value="${oIdx}" class="mt-1 w-5 h-5 text-violet-600 flex-shrink-0 cursor-pointer focus:ring-violet-500">
-                        <span class="flex-grow text-gray-800 text-base leading-snug" id="span_q_${index}_opt_${oIdx}">
-                            <strong class="text-violet-900 mr-1">${labels[oIdx]}.</strong> ${opt}
-                        </span>
-                    </label>
-                `;
-            });
-            phan1Html += `
-                <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm mb-6 question-item hover:shadow-md transition-shadow" data-index="${index}" data-type="mcq" data-ans="${q.answer}">
-                    <div class="mb-5 flex items-start gap-2">
-                        <span class="font-black text-violet-800 text-lg flex-shrink-0 bg-violet-100 px-3 py-1 rounded-lg">Câu ${mcqCounter}</span> 
-                        <span class="text-lg font-semibold text-gray-800 ml-1 pt-1 leading-relaxed">${q.text}</span>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${optionsHtml}</div>
-                </div>
-            `;
-            mcqCounter++;
-        } 
-        else if (q.type === 'tf') {
-            let optionsHtml = '';
-            q.options.forEach((opt, oIdx) => {
-                optionsHtml += `
-                    <div class="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl border border-gray-200 bg-gray-50/80 mb-3 tf-option transition-colors" id="box_q_${index}_tf_${oIdx}" data-ans="${opt.answer}">
-                        <span class="flex-grow text-gray-800 mb-3 md:mb-0 md:mr-6 text-base leading-relaxed"><strong>${['a', 'b', 'c', 'd'][oIdx]})</strong> ${opt.text.replace(/^[a-d]\)\s*/, '').replace(/^\([^)]*\)\s*/, '')}</span>
-                        <div class="flex space-x-6 flex-shrink-0 bg-white px-4 py-2 rounded-lg border border-gray-100 shadow-sm">
-                            <label class="flex items-center space-x-2 cursor-pointer hover:bg-green-50 px-2 py-1 rounded transition-colors">
-                                <input type="radio" name="q_${index}_tf_${oIdx}" value="true" class="w-5 h-5 text-green-600 focus:ring-green-500">
-                                <span class="font-bold text-green-700">Đúng</span>
-                            </label>
-                            <label class="flex items-center space-x-2 cursor-pointer hover:bg-red-50 px-2 py-1 rounded transition-colors">
-                                <input type="radio" name="q_${index}_tf_${oIdx}" value="false" class="w-5 h-5 text-red-600 focus:ring-red-500">
-                                <span class="font-bold text-red-700">Sai</span>
-                            </label>
-                        </div>
-                    </div>
-                `;
-            });
-            phan2Html += `
-                <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm mb-6 question-item hover:shadow-md transition-shadow" data-index="${index}" data-type="tf">
-                    <div class="mb-5 flex items-start gap-2">
-                        <span class="font-black text-fuchsia-800 text-lg flex-shrink-0 bg-fuchsia-100 px-3 py-1 rounded-lg">Câu ${tfCounter}</span> 
-                        <span class="text-lg font-semibold ml-1 pt-1 leading-relaxed text-gray-800">${q.text}</span>
-                    </div>
-                    <div class="flex flex-col">${optionsHtml}</div>
-                </div>
-            `;
-            tfCounter++;
+            const opts = q.options.map((o, j) => `
+                <label class="option-label flex items-start gap-3 p-3 border border-gray-200 rounded-lg" id="opt-${i}-${j}">
+                    <input type="radio" name="q${i}" value="${j}" class="mt-1 accent-emerald-600">
+                    <span><b>${'ABCD'[j]}.</b> ${esc(o)}</span>
+                </label>`).join('');
+            return head + `<div class="question-box border border-gray-200 rounded-2xl p-5" id="qbox-${i}">
+                <p class="font-semibold mb-3">Câu ${n}. ${nl(q.text)}</p>${media}
+                <div class="grid gap-2 md:grid-cols-2">${opts}</div></div>`;
         }
-    });
-
-    if(phan1Html !== '') html += `
-        <div class="flex items-center gap-2 mb-6 mt-2">
-            <div class="h-8 w-2 bg-violet-600 rounded-full"></div>
-            <h3 class="text-xl font-black uppercase text-gray-800 tracking-wide">Phần I: Câu hỏi trắc nghiệm nhiều phương án</h3>
-        </div>
-        ${phan1Html}
-    `;
-    if(phan2Html !== '') html += `
-        <div class="flex items-center gap-2 mb-6 mt-12">
-            <div class="h-8 w-2 bg-fuchsia-600 rounded-full"></div>
-            <h3 class="text-xl font-black uppercase text-gray-800 tracking-wide">Phần II: Câu trắc nghiệm Đúng/Sai</h3>
-        </div>
-        ${phan2Html}
-    `;
-
-    container.innerHTML = html;
+        if (q.type === 'sa') {
+            return head + `<div class="question-box border border-gray-200 rounded-2xl p-5" id="qbox-${i}">
+                <p class="font-semibold mb-3">Câu ${n}. ${nl(q.text)}</p>${media}
+                <div class="flex items-center gap-3">
+                    <span class="text-sm text-gray-600">Đáp án:</span>
+                    <input type="text" inputmode="decimal" autocomplete="off" name="q${i}" id="sa-${i}" placeholder="Nhập số"
+                        class="border border-gray-300 rounded-lg px-3 py-2 w-48 focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                    ${q.unit ? `<span class="text-sm text-gray-500">${esc(q.unit)}</span>` : ''}
+                </div></div>`;
+        }
+        const rows = q.options.map((o, j) => `
+            <div class="flex flex-col md:flex-row md:flex-wrap md:items-center gap-2 p-3 border border-gray-200 rounded-lg" id="opt-${i}-${j}">
+                <div class="flex-grow">${esc(o.text)}</div>
+                <div class="flex gap-2 flex-shrink-0">
+                    <label class="option-label px-4 py-1.5 border border-gray-200 rounded-md"><input type="radio" name="q${i}_${j}" value="true" class="accent-emerald-600"> <span>Đúng</span></label>
+                    <label class="option-label px-4 py-1.5 border border-gray-200 rounded-md"><input type="radio" name="q${i}_${j}" value="false" class="accent-emerald-600"> <span>Sai</span></label>
+                </div>
+            </div>`).join('');
+        return head + `<div class="question-box border border-gray-200 rounded-2xl p-5" id="qbox-${i}">
+            <p class="font-semibold mb-3">Câu ${n}. ${nl(q.text.replace(/^Câu\s*\d+\.\s*/, ''))}</p>${media}
+            <div class="space-y-2">${rows}</div></div>`;
+    }).join('');
 }
 
-function submitTest() {
-    if(isSubmitted) return;
-    clearInterval(timerInterval);
-    isSubmitted = true;
-    document.getElementById('submit-btn').classList.add('hidden-element');
-
-    let totalScore = 0;
-    let maxScore = 0;
-
-    document.querySelectorAll('.question-item').forEach(el => {
-        const index = el.getAttribute('data-index');
-        const type = el.getAttribute('data-type');
-        
-        if(type === 'mcq') {
-            maxScore += 1; 
-            const correctAns = parseInt(el.getAttribute('data-ans'));
-            const selected = document.querySelector(`input[name="q_${index}"]:checked`);
-            
-            document.querySelectorAll(`input[name="q_${index}"]`).forEach(input => input.disabled = true);
-            document.getElementById(`box_q_${index}_opt_${correctAns}`).classList.add('correct-ans-box');
-
-            if (selected) {
-                const selectedVal = parseInt(selected.value);
-                if (selectedVal === correctAns) totalScore += 1;
-                else document.getElementById(`box_q_${index}_opt_${selectedVal}`).classList.add('wrong-ans-box');
-            }
-        } 
-        else if (type === 'tf') {
-            maxScore += 1; 
-            let correctSubCount = 0;
-            
-            el.querySelectorAll('.tf-option').forEach((tfEl, oIdx) => {
-                const correctAns = tfEl.getAttribute('data-ans') === 'true';
-                const selected = document.querySelector(`input[name="q_${index}_tf_${oIdx}"]:checked`);
-                
-                document.querySelectorAll(`input[name="q_${index}_tf_${oIdx}"]`).forEach(input => input.disabled = true);
-                
-                if(selected) {
-                    const selectedVal = selected.value === 'true';
-                    if(selectedVal === correctAns) {
-                        correctSubCount++;
-                        tfEl.classList.add('correct-ans-box');
-                    } else {
-                        tfEl.classList.add('wrong-ans-box');
-                    }
-                } else {
-                    tfEl.classList.add('wrong-ans-box'); 
-                }
-            });
-
-            if(correctSubCount === 4) totalScore += 1;
-            else if(correctSubCount === 3) totalScore += 0.5;
-            else if(correctSubCount === 2) totalScore += 0.25;
-            else if(correctSubCount === 1) totalScore += 0.1;
-        }
-    });
-
-    let finalScore = maxScore === 0 ? 0 : (totalScore / maxScore) * 10;
-    
-    document.getElementById('score-display').innerText = `${finalScore.toFixed(2)}/10`;
-    document.getElementById('result-screen').classList.remove('hidden-element');
-    window.scrollTo({ top: document.getElementById('result-screen').offsetTop - 50, behavior: 'smooth' });
+/* ---------- 5a. BẢNG SỐ LIỆU ----------
+   spec = { title, headers:[], rows:[[...]], unit, note } */
+function renderTables(list) {
+    if (!list || !list.length) return '';
+    return list.map(t => `
+        <figure class="my-4 p-3 bg-white border border-gray-200 rounded-xl overflow-x-auto">
+            <figcaption class="text-center font-semibold text-sm text-gray-800 mb-2">${esc(t.title || '')}${t.unit ? ` <span class="font-normal text-gray-500">(Đơn vị: ${esc(t.unit)})</span>` : ''}</figcaption>
+            <table class="w-full text-sm border-collapse">
+                <thead><tr>${t.headers.map(h => `<th class="border border-gray-300 bg-emerald-50 px-3 py-2 text-center">${esc(h)}</th>`).join('')}</tr></thead>
+                <tbody>${t.rows.map(r => `<tr>${r.map((c, k) => `<td class="border border-gray-300 px-3 py-1.5 ${k === 0 ? 'font-medium' : 'text-right'}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody>
+            </table>
+            ${t.note ? `<p class="text-xs text-gray-500 italic mt-1 text-right">${esc(t.note)}</p>` : ''}
+        </figure>`).join('');
 }
 
-function startTimer() {
-    timerInterval = setInterval(() => {
-        if(timeLeft <= 0) { clearInterval(timerInterval); submitTest(); return; }
-        timeLeft--;
-        const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-        const s = (timeLeft % 60).toString().padStart(2, '0');
-        document.getElementById('timer-display').innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
-            </svg>
-            ${m}:${s}
-        `;
+/* ---------- 5b. VẼ BIỂU ĐỒ SVG (bar / stacked / line) ----------
+   spec = { kind, title, unit, categories:[], series:[{name, values:[]}], note } */
+const CHART_COLORS = ['#059669', '#2563eb', '#f59e0b', '#e11d48', '#7c3aed'];
+const fmtNum = (v) => Number(v).toLocaleString('vi-VN', { maximumFractionDigits: 1 });
+
+function niceTop(max) {
+    if (max <= 0) return { top: 1, step: 0.2 };
+    const raw = max / 5, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    const f = raw / mag, nf = f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10;
+    const step = nf * mag;
+    return { top: step * Math.ceil(max / step - 1e-9), step };
+}
+
+function chartSVG(spec) {
+    const W = 640, H = 340, m = { l: 62, r: 18, t: 26, b: 62 };
+    const pw = W - m.l - m.r, ph = H - m.t - m.b;
+    const cats = spec.categories || [], series = spec.series || [], n = cats.length;
+    if (!n || !series.length) return '';
+    const kind = spec.kind || 'bar';
+    let maxV = 0;
+    if (kind === 'stacked') cats.forEach((_, i) => { maxV = Math.max(maxV, series.reduce((a, s) => a + s.values[i], 0)); });
+    else series.forEach(s => s.values.forEach(v => { maxV = Math.max(maxV, v); }));
+    const { top, step } = niceTop(maxV);
+    const y = (v) => m.t + ph - (v / top) * ph;
+    const gw = pw / n;
+    let g = '';
+    for (let v = 0; v <= top + 1e-9; v += step) {
+        g += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}" stroke="#e5e7eb"/>` +
+             `<text x="${m.l - 8}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="#6b7280">${fmtNum(v)}</text>`;
+    }
+    g += `<text x="6" y="14" text-anchor="start" font-size="11" font-weight="600" fill="#374151">Đơn vị: ${esc(spec.unit || '')}</text>`;
+    g += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(0)}" y2="${y(0)}" stroke="#9ca3af"/>`;
+
+    cats.forEach((c, i) => {
+        g += `<text x="${m.l + gw * i + gw / 2}" y="${H - m.b + 18}" text-anchor="middle" font-size="12" fill="#374151">${esc(c)}</text>`;
+    });
+
+    if (kind === 'bar') {
+        const bw = (gw * 0.7) / series.length;
+        series.forEach((s, k) => s.values.forEach((v, i) => {
+            const x = m.l + gw * i + gw * 0.15 + bw * k;
+            g += `<rect x="${x}" y="${y(v)}" width="${bw - 2}" height="${y(0) - y(v)}" fill="${CHART_COLORS[k % 5]}" rx="2"/>` +
+                 `<text x="${x + (bw - 2) / 2}" y="${y(v) - 5}" text-anchor="middle" font-size="11" font-weight="600" fill="#111827">${fmtNum(v)}</text>`;
+        }));
+    } else if (kind === 'stacked') {
+        const bw = gw * 0.5;
+        cats.forEach((_, i) => {
+            let acc = 0;
+            series.forEach((s, k) => {
+                const v = s.values[i], x = m.l + gw * i + (gw - bw) / 2, y1 = y(acc + v), h = y(acc) - y1;
+                g += `<rect x="${x}" y="${y1}" width="${bw}" height="${h}" fill="${CHART_COLORS[k % 5]}"/>`;
+                if (h > 16) g += `<text x="${x + bw / 2}" y="${y1 + h / 2 + 4}" text-anchor="middle" font-size="11" font-weight="600" fill="#fff">${fmtNum(v)}</text>`;
+                acc += v;
+            });
+        });
+    } else if (kind === 'line') {
+        series.forEach((s, k) => {
+            const pts = s.values.map((v, i) => [m.l + gw * i + gw / 2, y(v)]);
+            g += `<polyline fill="none" stroke="${CHART_COLORS[k % 5]}" stroke-width="2.5" points="${pts.map(p => p.join(',')).join(' ')}"/>`;
+            pts.forEach((p, i) => {
+                g += `<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="${CHART_COLORS[k % 5]}"/>` +
+                     `<text x="${p[0]}" y="${p[1] - 9}" text-anchor="middle" font-size="11" font-weight="600" fill="#111827">${fmtNum(s.values[i])}</text>`;
+            });
+        });
+    }
+
+    // Chú giải
+    if (series.length > 1 || kind === 'stacked') {
+        let lx = m.l;
+        series.forEach((s, k) => {
+            g += `<rect x="${lx}" y="${H - 18}" width="12" height="12" fill="${CHART_COLORS[k % 5]}" rx="2"/>` +
+                 `<text x="${lx + 17}" y="${H - 8}" font-size="11.5" fill="#374151">${esc(s.name)}</text>`;
+            lx += 40 + s.name.length * 6.4;
+        });
+    }
+    return `<svg viewBox="0 0 ${W} ${H}" class="w-full h-auto" role="img" aria-label="${esc(spec.title || 'Biểu đồ')}">${g}</svg>`;
+}
+
+function renderCharts(list) {
+    if (!list || !list.length) return '';
+    return list.map(spec => `
+        <figure class="my-4 p-3 bg-white border border-gray-200 rounded-xl overflow-x-auto">
+            <figcaption class="text-center font-semibold text-sm text-gray-800 mb-2">${esc(spec.title || '')}</figcaption>
+            <div style="min-width:480px">${chartSVG(spec)}</div>
+            ${spec.note ? `<p class="text-xs text-gray-500 italic mt-1 text-right">${esc(spec.note)}</p>` : ''}
+        </figure>`).join('');
+}
+
+/* ---------- 6. ĐỒNG HỒ ---------- */
+const fmt = (s) => String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+function paintTimer(s) { $('timer-display').lastChild.textContent = ' ' + fmt(s); }
+
+function startTimer(countdown) {
+    paintTimer(countdown ? secondsLeft : 0);
+    timerId = setInterval(() => {
+        if (countdown) {
+            secondsLeft--;
+            paintTimer(Math.max(secondsLeft, 0));
+            if (secondsLeft <= 0) { alert('Hết giờ! Hệ thống tự động nộp bài.'); submitTest(true); }
+        } else { secondsElapsed++; paintTimer(secondsElapsed); }
     }, 1000);
 }
+function stopTimer() { if (timerId) { clearInterval(timerId); timerId = null; } }
 
-function resetTimer(minutes) { clearInterval(timerInterval); timeLeft = minutes * 60; document.getElementById('timer-display').innerHTML = `
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
-    </svg>
-    ${minutes}:00
-`; }
-function continueAfterResult() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+/* ---------- 7. CHẤM ĐIỂM ----------
+   TN nhiều lựa chọn: 0,25 điểm/câu.
+   Đúng/Sai: đúng 1 ý = 0,1; 2 ý = 0,25; 3 ý = 0,5; 4 ý = 1,0.
+   Điểm hiển thị quy về thang 10 theo tỉ lệ (đề thi thử 24 + 4 câu = đúng 10 điểm). */
+const TF_POINTS = [0, 0.1, 0.25, 0.5, 1];
+
+function submitTest(force = false) {
+    if (state.submitted || !state.questions.length) return;
+
+    if (!force) {
+        let blank = 0;
+        state.questions.forEach((q, i) => {
+            if (q.type === 'mcq') { if (!document.querySelector(`input[name="q${i}"]:checked`)) blank++; }
+            else if (q.type === 'sa') { if (!$(`sa-${i}`).value.trim()) blank++; }
+            else q.options.forEach((_, j) => { if (!document.querySelector(`input[name="q${i}_${j}"]:checked`)) blank++; });
+        });
+        if (blank > 0 && !confirm(`Bạn còn ${blank} mục chưa trả lời. Vẫn nộp bài?`)) return;
+    }
+
+    stopTimer();
+    state.submitted = true;
+    let earned = 0, max = 0, right = 0, total = 0;
+
+    state.questions.forEach((q, i) => {
+        if (q.type === 'mcq') {
+            max += 0.25; total++;
+            const sel = document.querySelector(`input[name="q${i}"]:checked`);
+            const picked = sel ? Number(sel.value) : -1;
+            const okLabel = $(`opt-${i}-${q.answer}`);
+            okLabel.classList.add('correct-ans-box'); okLabel.querySelector('span').classList.add('correct-ans-text');
+            if (q.explain) $(`qbox-${i}`).insertAdjacentHTML('beforeend',
+                `<div class="mt-3 text-xs text-gray-700 bg-white/70 border-l-4 border-emerald-400 rounded px-3 py-2">💡 <b>Đáp án ${'ABCD'[q.answer]}.</b> ${esc(q.explain)}</div>`);
+            if (picked === q.answer) { earned += 0.25; right++; }
+            else if (picked >= 0) {
+                const bad = $(`opt-${i}-${picked}`);
+                bad.classList.add('wrong-ans-box'); bad.querySelector('span').classList.add('wrong-ans-text');
+            }
+        } else if (q.type === 'sa') {
+            max += 0.25; total++;
+            const inp = $(`sa-${i}`);
+            const raw = inp.value.trim().replace(',', '.');
+            const v = parseFloat(raw);
+            const good = raw !== '' && !isNaN(v) && Math.abs(v - q.answer) <= (q.tol != null ? q.tol : 1e-4);
+            if (good) { earned += 0.25; right++; }
+            inp.classList.add(good ? 'correct-ans-box' : 'wrong-ans-box');
+            $(`qbox-${i}`).insertAdjacentHTML('beforeend',
+                `<div class="mt-3 text-sm font-bold ${good ? 'text-green-700' : 'text-red-700'}">${good ? 'Chính xác!' : 'Chưa đúng.'} Đáp án: ${String(q.answer).replace('.', ',')}${q.unit ? ' ' + esc(q.unit) : ''}</div>` +
+                (q.explain ? `<div class="mt-2 text-xs text-gray-700 bg-white/70 border-l-4 border-emerald-400 rounded px-3 py-2">💡 ${esc(q.explain)}</div>` : ''));
+        } else {
+            max += 1; total++;
+            let ok = 0;
+            q.options.forEach((o, j) => {
+                const sel = document.querySelector(`input[name="q${i}_${j}"]:checked`);
+                const row = $(`opt-${i}-${j}`);
+                const picked = sel ? sel.value === 'true' : null;
+                if (picked === o.answer) { ok++; row.classList.add('correct-ans-box'); }
+                else row.classList.add('wrong-ans-box');
+                row.insertAdjacentHTML('beforeend',
+                    `<div class="text-xs font-bold ${picked === o.answer ? 'text-green-700' : 'text-red-700'} md:ml-2">Đáp án: ${o.answer ? 'Đúng' : 'Sai'}</div>` +
+                    (o.explain ? `<div class="w-full basis-full text-xs text-gray-700 bg-white/70 border-l-4 border-emerald-400 rounded px-3 py-2">💡 ${esc(o.explain)}</div>` : ''));
+            });
+            earned += TF_POINTS[ok];
+            if (ok === 4) right++;
+        }
+    });
+
+    state.questions.forEach((_, i) => document.querySelectorAll(`#qbox-${i} input`).forEach(el => el.disabled = true));
+
+    const score10 = max ? (earned / max) * 10 : 0;
+    $('score-display').textContent = `${score10.toFixed(2).replace(/\.?0+$/, '')}/10`;
+    showScreen('result');
+    $('result-screen').scrollIntoView({ behavior: 'smooth' });
+}
+
+function continueAfterResult() {
+    const section = state.section;
+    selectSection(section);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ---------- 8. KHỞI ĐỘNG ---------- */
+document.addEventListener('DOMContentLoaded', () => selectSection('khoi12'));
