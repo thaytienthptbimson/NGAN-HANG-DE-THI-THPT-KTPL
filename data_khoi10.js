@@ -221,4 +221,16 @@ function buildFullTopicData(baseObj) {
             });
         }
 
-        result[key] =
+        result[key] = {
+            title: item.title,
+            exercises: {
+                mcq: fullMcq,
+                tf: fullTf
+            }
+        };
+    });
+    return result;
+}
+
+const dataKhoi10 = buildFullTopicData(baseKhoi10);
+window.appDatabase.khoi10 = dataKhoi10;
