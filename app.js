@@ -1,14 +1,26 @@
 /* =========================================================================
    FILE XỬ LÝ LOGIC CHÍNH (app.js)
    Hệ thống Luyện thi Tốt nghiệp THPT môn GDKT&PL 2026
+   Bản quyền thuộc về số ĐT: 0943.930.787
 ========================================================================= */
 
-// Khởi tạo và tự động kết nối dữ liệu từ các file data_*.js
+// Tự động kết nối dữ liệu từ tất cả các file data_*.js
 window.appDatabase = window.appDatabase || {};
-window.appDatabase.khoi10 = window.appDatabase.khoi10 || (typeof dataKhoi10 !== 'undefined' ? dataKhoi10 : {});
-window.appDatabase.khoi11 = window.appDatabase.khoi11 || (typeof dataKhoi11 !== 'undefined' ? dataKhoi11 : {});
-window.appDatabase.khoi12 = window.appDatabase.khoi12 || (typeof dataKhoi12 !== 'undefined' ? dataKhoi12 : {});
-window.appDatabase.mocktest = window.appDatabase.mocktest || (typeof dataMocktest !== 'undefined' ? dataMocktest : {});
+window.appDatabase.khoi10 = (window.appDatabase.khoi10 && Object.keys(window.appDatabase.khoi10).length > 0) 
+    ? window.appDatabase.khoi10 
+    : (typeof dataKhoi10 !== 'undefined' ? dataKhoi10 : {});
+
+window.appDatabase.khoi11 = (window.appDatabase.khoi11 && Object.keys(window.appDatabase.khoi11).length > 0) 
+    ? window.appDatabase.khoi11 
+    : (typeof dataKhoi11 !== 'undefined' ? dataKhoi11 : {});
+
+window.appDatabase.khoi12 = (window.appDatabase.khoi12 && Object.keys(window.appDatabase.khoi12).length > 0) 
+    ? window.appDatabase.khoi12 
+    : (typeof dataKhoi12 !== 'undefined' ? dataKhoi12 : {});
+
+window.appDatabase.mocktest = (window.appDatabase.mocktest && Object.keys(window.appDatabase.mocktest).length > 0) 
+    ? window.appDatabase.mocktest 
+    : (typeof dataMocktest !== 'undefined' ? dataMocktest : {});
 
 let currentSection = 'khoi12'; 
 let currentTopicId = null;
@@ -21,6 +33,16 @@ document.addEventListener('DOMContentLoaded', () => {
     selectSection('khoi12'); 
 });
 
+// Hàm trộn mảng ngẫu nhiên để sinh đề kiểm tra 28 câu chuẩn (24 MCQ + 4 Đúng/Sai)
+function shuffleArray(arr) {
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+}
+
 function selectSection(section) {
     currentSection = section;
     clearInterval(timerInterval);
@@ -30,8 +52,8 @@ function selectSection(section) {
         const tab = document.getElementById('tab-' + t);
         if(tab) {
             tab.className = t === section 
-                ? "px-5 py-2 bg-gray-50 text-violet-900 font-bold rounded-md shadow-sm text-sm transition-colors"
-                : "px-5 py-2 bg-white/20 hover:bg-white/90 hover:text-violet-900 font-semibold rounded-md text-sm transition-colors";
+                ? "px-3 md:px-5 py-2 bg-gray-50 text-violet-900 font-bold rounded-md shadow-sm text-xs md:text-sm transition-colors"
+                : "px-3 md:px-5 py-2 bg-white/20 hover:bg-white/90 hover:text-violet-900 font-semibold rounded-md text-xs md:text-sm transition-colors";
         }
     });
 
@@ -59,6 +81,8 @@ function renderSidebar() {
 
         topics.forEach((topicId, idx) => {
             const topic = sectionData[topicId];
+            const mcqCount = (topic.exercises && topic.exercises.mcq) ? topic.exercises.mcq.length : 0;
+            const tfCount = (topic.exercises && topic.exercises.tf) ? topic.exercises.tf.length : 0;
             const isFirst = idx === 0;
             const div = document.createElement('div');
             div.className = 'border-b border-gray-200 mb-1 rounded-lg overflow-hidden';
@@ -68,9 +92,18 @@ function renderSidebar() {
                     <span class="text-[10px] text-gray-400 transition-transform duration-200" id="icon-${currentSection}-${topicId}" style="transform: ${isFirst ? 'rotate(180deg)' : 'rotate(0deg)'}">▼</span>
                 </div>
                 <div id="menu-${currentSection}-${topicId}" class="flex flex-col bg-gray-50/60 border-t border-gray-100 ${isFirst ? '' : 'hidden-element'}">
-                    <button onclick="startTest('${currentSection}', ${topicId}, 'mcq')" class="text-left px-6 py-2.5 text-sm border-b border-gray-100 hover:bg-violet-100/60 text-gray-600 hover:text-violet-800 transition-colors">• Luyện Trắc nghiệm (Nhiều lựa chọn)</button>
-                    <button onclick="startTest('${currentSection}', ${topicId}, 'tf')" class="text-left px-6 py-2.5 text-sm border-b border-gray-100 hover:bg-violet-100/60 text-gray-600 hover:text-violet-800 transition-colors">• Luyện Đúng/Sai</button>
-                    <button onclick="startTest('${currentSection}', ${topicId}, 'test')" class="text-left px-6 py-2.5 text-sm hover:bg-fuchsia-50 font-semibold text-fuchsia-700 hover:text-fuchsia-800 transition-colors">★ Bài kiểm tra Đơn vị (Tổng hợp)</button>
+                    <button onclick="startTest('${currentSection}', ${topicId}, 'mcq')" class="text-left px-4 py-2.5 text-sm border-b border-gray-100 hover:bg-violet-100/60 text-gray-600 hover:text-violet-800 transition-colors flex justify-between items-center">
+                        <span>• Luyện Trắc nghiệm</span>
+                        <span class="text-xs bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full font-bold flex-shrink-0">${mcqCount} câu</span>
+                    </button>
+                    <button onclick="startTest('${currentSection}', ${topicId}, 'tf')" class="text-left px-4 py-2.5 text-sm border-b border-gray-100 hover:bg-violet-100/60 text-gray-600 hover:text-violet-800 transition-colors flex justify-between items-center">
+                        <span>• Luyện Đúng/Sai</span>
+                        <span class="text-xs bg-fuchsia-100 text-fuchsia-700 px-2 py-0.5 rounded-full font-bold flex-shrink-0">${tfCount} câu</span>
+                    </button>
+                    <button onclick="startTest('${currentSection}', ${topicId}, 'test')" class="text-left px-4 py-2.5 text-sm hover:bg-fuchsia-50 font-semibold text-fuchsia-700 hover:text-fuchsia-800 transition-colors flex justify-between items-center">
+                        <span>★ Bài kiểm tra Đơn vị</span>
+                        <span class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold flex-shrink-0">28 câu chuẩn</span>
+                    </button>
                 </div>
             `;
             container.appendChild(div);
@@ -116,26 +149,32 @@ function startTest(section, topicId, exerciseType) {
     document.getElementById('submit-btn').classList.remove('hidden-element');
     
     if (section.startsWith('khoi')) {
-        let typeStr = exerciseType === 'mcq' ? "Luyện Trắc nghiệm nhiều phương án" : (exerciseType === 'tf' ? "Luyện Trắc nghiệm Đúng/Sai" : "Bài kiểm tra Đơn vị (Tổng hợp)");
+        let typeStr = exerciseType === 'mcq' 
+            ? "Luyện Trắc nghiệm nhiều phương án (30 câu)" 
+            : (exerciseType === 'tf' ? "Luyện Trắc nghiệm Đúng/Sai (20 câu)" : "Bài kiểm tra Đơn vị - Chuẩn cấu trúc Đề thi 2026 (24 câu MCQ + 4 câu Đúng/Sai)");
         document.getElementById('current-test-title').innerText = `${window.appDatabase[section][topicId].title}`;
         document.getElementById('current-test-subtitle').innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg> ${typeStr}
         `;
-        resetTimer(45); 
+        resetTimer(exerciseType === 'test' ? 50 : 45); 
     } else {
         document.getElementById('current-test-title').innerText = `Đề thi thử Tốt nghiệp THPT 2026 - Đề số ${exerciseType}`;
         document.getElementById('current-test-subtitle').innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg> Môn: Giáo dục Kinh tế và Pháp luật (Thời gian: 50 phút - 28 câu)
+            </svg> Môn: Giáo dục Kinh tế và Pháp luật (Thời gian: 50 phút - 28 câu chuẩn)
         `;
         resetTimer(50); 
     }
     renderTestContent();
     startTimer();
     window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function retryCurrentTest() {
+    startTest(currentSection, currentTopicId, currentExerciseType);
 }
 
 function cleanText(str) {
@@ -152,10 +191,10 @@ function renderTestContent() {
         const topicData = window.appDatabase[currentSection][currentTopicId];
         if (topicData && topicData.exercises) {
             if (currentExerciseType === 'test') {
-                questions = [
-                    ...(topicData.exercises.mcq || []),
-                    ...(topicData.exercises.tf || [])
-                ];
+                // Trích xuất ngẫu nhiên đúng 24 câu MCQ + 4 câu Đúng/Sai = 28 câu chuẩn cấu trúc đề thi 2026
+                const mcq24 = shuffleArray(topicData.exercises.mcq || []).slice(0, 24);
+                const tf4 = shuffleArray(topicData.exercises.tf || []).slice(0, 4);
+                questions = [...mcq24, ...tf4];
             } else {
                 questions = topicData.exercises[currentExerciseType] || [];
             }
@@ -243,14 +282,14 @@ function renderTestContent() {
     if(phan1Html !== '') html += `
         <div class="flex items-center gap-2 mb-6 mt-2">
             <div class="h-8 w-2 bg-violet-600 rounded-full"></div>
-            <h3 class="text-xl font-black uppercase text-gray-800 tracking-wide">Phần I: Câu hỏi trắc nghiệm nhiều phương án</h3>
+            <h3 class="text-xl font-black uppercase text-gray-800 tracking-wide">Phần I: Câu hỏi trắc nghiệm nhiều phương án (${mcqCounter - 1} câu)</h3>
         </div>
         ${phan1Html}
     `;
     if(phan2Html !== '') html += `
         <div class="flex items-center gap-2 mb-6 mt-12">
             <div class="h-8 w-2 bg-fuchsia-600 rounded-full"></div>
-            <h3 class="text-xl font-black uppercase text-gray-800 tracking-wide">Phần II: Câu trắc nghiệm Đúng/Sai</h3>
+            <h3 class="text-xl font-black uppercase text-gray-800 tracking-wide">Phần II: Câu trắc nghiệm Đúng/Sai (${tfCounter - 1} câu)</h3>
         </div>
         ${phan2Html}
     `;
@@ -266,12 +305,17 @@ function submitTest() {
 
     let totalScore = 0;
     let maxScore = 0;
+    let mcqRight = 0;
+    let mcqTotal = 0;
+    let tfSubRight = 0;
+    let tfSubTotal = 0;
 
     document.querySelectorAll('.question-item').forEach(el => {
         const index = el.getAttribute('data-index');
         const type = el.getAttribute('data-type');
         
         if(type === 'mcq') {
+            mcqTotal++;
             maxScore += 0.25; 
             const correctAns = parseInt(el.getAttribute('data-ans'));
             const selected = document.querySelector(`input[name="q_${index}"]:checked`);
@@ -284,6 +328,7 @@ function submitTest() {
                 const selectedVal = parseInt(selected.value);
                 if (selectedVal === correctAns) {
                     totalScore += 0.25;
+                    mcqRight++;
                 } else {
                     const wrongBox = document.getElementById(`box_q_${index}_opt_${selectedVal}`);
                     if (wrongBox) wrongBox.classList.add('wrong-ans-box');
@@ -295,6 +340,7 @@ function submitTest() {
             let correctSubCount = 0;
             
             el.querySelectorAll('.tf-option').forEach((tfEl, oIdx) => {
+                tfSubTotal++;
                 const correctAns = tfEl.getAttribute('data-ans') === 'true';
                 const selected = document.querySelector(`input[name="q_${index}_tf_${oIdx}"]:checked`);
                 const badge = document.getElementById(`ans_badge_q_${index}_tf_${oIdx}`);
@@ -311,6 +357,7 @@ function submitTest() {
                     const selectedVal = selected.value === 'true';
                     if(selectedVal === correctAns) {
                         correctSubCount++;
+                        tfSubRight++;
                         tfEl.classList.add('correct-ans-box');
                     } else {
                         tfEl.classList.add('wrong-ans-box');
@@ -330,6 +377,15 @@ function submitTest() {
     let finalScore = maxScore === 0 ? 0 : (totalScore / maxScore) * 10;
     
     document.getElementById('score-display').innerText = `${finalScore.toFixed(2)}/10`;
+    
+    const detailEl = document.getElementById('score-detail-text');
+    if (detailEl) {
+        let parts = [];
+        if (mcqTotal > 0) parts.push(`Trắc nghiệm: Đúng ${mcqRight}/${mcqTotal} câu`);
+        if (tfSubTotal > 0) parts.push(`Đúng/Sai: Đúng ${tfSubRight}/${tfSubTotal} ý`);
+        detailEl.innerText = parts.join('  |  ');
+    }
+
     document.getElementById('result-screen').classList.remove('hidden-element');
     window.scrollTo({ top: document.getElementById('result-screen').offsetTop - 50, behavior: 'smooth' });
 }
