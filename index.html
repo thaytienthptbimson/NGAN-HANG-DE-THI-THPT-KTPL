@@ -25,6 +25,40 @@
     </style>
 </head>
 <body class="min-h-screen flex flex-col text-gray-800">
+    <!-- MODAL KÍCH HOẠT BẢN QUYỀN / HẾT HẠN DÙNG THỬ -->
+    <div id="license-modal" class="fixed inset-0 z-50 bg-gray-900/80 backdrop-blur-sm flex items-center justify-center p-4 hidden-element">
+        <div class="bg-white rounded-2xl shadow-2xl border border-violet-200 max-w-md w-full p-6 md:p-8 text-center relative animate-fade-in">
+            <button id="close-license-btn" onclick="closeLicenseModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 hidden-element" title="Đóng">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div class="w-16 h-16 bg-violet-100 text-violet-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+            </div>
+            <h3 class="text-2xl font-black text-violet-900 mb-2" id="license-modal-title">Kích hoạt Bản quyền</h3>
+            <p class="text-sm text-gray-600 mb-5 leading-relaxed" id="license-modal-desc">
+                Thời gian dùng thử <strong>10 ngày</strong> đã kết thúc. Vui lòng nhập mật khẩu kích hoạt để tiếp tục sử dụng phần mềm trong <strong>365 ngày</strong>.
+            </p>
+            <div class="mb-4 text-left">
+                <label class="block text-xs font-bold uppercase text-gray-700 mb-1.5">Mật khẩu kích hoạt</label>
+                <input type="password" id="license-password-input" placeholder="Nhập mật khẩu bản quyền..." 
+                    class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-violet-600 focus:ring-2 focus:ring-violet-200 outline-none text-base font-semibold text-gray-800 transition-all"
+                    onkeypress="if(event.key === 'Enter') verifyLicensePassword()">
+                <p id="license-error-msg" class="text-xs font-bold text-red-600 mt-2 hidden-element">Mật khẩu không chính xác! Vui lòng kiểm tra lại.</p>
+            </div>
+            <button onclick="verifyLicensePassword()" class="w-full bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all text-base">
+                KÍCH HOẠT NGAY (365 NGÀY)
+            </button>
+            <div class="mt-5 pt-4 border-t border-gray-100 text-xs text-gray-500 font-medium">
+                Liên hệ cấp mã bản quyền: <strong>Thầy Phạm Văn Tiến</strong><br>
+                Số ĐT / Zalo: <strong class="text-violet-700">0943.930.787</strong>
+            </div>
+        </div>
+    </div>
+
     <!-- Header -->
     <header class="glass-header text-white sticky top-0 z-40 h-[64px] flex items-center">
         <div class="max-w-[1500px] w-full mx-auto px-4 flex justify-between items-center">
@@ -34,12 +68,19 @@
                 <button onclick="selectSection('khoi12')" id="tab-khoi12" class="px-3 md:px-5 py-2 bg-gray-50 text-violet-900 font-bold rounded-md shadow-sm text-xs md:text-sm transition-colors">LỚP 12</button>
                 <button onclick="selectSection('mocktest')" id="tab-mocktest" class="px-3 md:px-5 py-2 bg-white/20 hover:bg-white/90 hover:text-violet-900 font-semibold rounded-md text-xs md:text-sm transition-colors">ĐỀ THI THỬ</button>
             </div>
-            <h1 class="text-lg font-bold uppercase tracking-wider hidden lg:block truncate px-4 drop-shadow-md">Ngân hàng GDKT & PL 2026</h1>
-            <div class="text-base md:text-lg font-black bg-white/20 backdrop-blur-md px-3 md:px-4 py-1.5 rounded-lg border border-white/30 shadow-inner flex-shrink-0 flex items-center gap-1.5" id="timer-display">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
-                </svg>
-                45:00
+            <h1 class="text-lg font-bold uppercase tracking-wider hidden xl:block truncate px-4 drop-shadow-md">Ngân hàng GDKT & PL 2026</h1>
+            <div class="flex items-center gap-2">
+                <!-- Nhãn hiển thị trạng thái Dùng thử / Bản quyền -->
+                <button onclick="openLicenseModalManual()" id="license-status-badge" title="Bấm để nhập mã kích hoạt 365 ngày" class="text-xs font-bold bg-amber-400/20 hover:bg-amber-400/30 text-amber-200 px-3 py-1.5 rounded-lg border border-amber-300/40 transition-colors cursor-pointer hidden sm:flex items-center gap-1.5">
+                    <span>⏳ Đang kiểm tra...</span>
+                </button>
+                <!-- Đồng hồ đếm ngược -->
+                <div class="text-base md:text-lg font-black bg-white/20 backdrop-blur-md px-3 md:px-4 py-1.5 rounded-lg border border-white/30 shadow-inner flex-shrink-0 flex items-center gap-1.5" id="timer-display">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                    </svg>
+                    45:00
+                </div>
             </div>
         </div>
     </header>
@@ -137,6 +178,130 @@
             </p>
         </div>
     </footer>
+
+    <!-- SCRIPT KIỂM TRA DÙNG THỬ 10 NGÀY & KÍCH HOẠT 365 NGÀY -->
+    <script>
+        (function() {
+            const STORAGE_KEY = 'ktpl2026_license_info';
+            const PASS_KEY = 'tienhuong123456';
+            const TRIAL_DAYS = 10;
+            const FULL_DAYS = 365;
+            const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+            function getLicenseData() {
+                try {
+                    const raw = localStorage.getItem(STORAGE_KEY);
+                    if (raw) return JSON.parse(raw);
+                } catch (e) {}
+                const initData = {
+                    status: 'trial',
+                    startTime: Date.now(),
+                    expireTime: Date.now() + TRIAL_DAYS * MS_PER_DAY
+                };
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(initData));
+                } catch (e) {}
+                return initData;
+            }
+
+            window.checkAppLicense = function() {
+                const data = getLicenseData();
+                const now = Date.now();
+                const remainingMs = data.expireTime - now;
+                const remainingDays = Math.ceil(remainingMs / MS_PER_DAY);
+                const badge = document.getElementById('license-status-badge');
+                const modal = document.getElementById('license-modal');
+                const closeBtn = document.getElementById('close-license-btn');
+                const titleEl = document.getElementById('license-modal-title');
+                const descEl = document.getElementById('license-modal-desc');
+
+                if (remainingMs <= 0) {
+                    // Đã hết hạn
+                    if (badge) {
+                        badge.innerHTML = `<span>🔒 Hết hạn (${data.status === 'trial' ? 'Dùng thử' : 'Bản quyền'})</span>`;
+                        badge.className = "text-xs font-bold bg-red-500/30 text-red-100 px-3 py-1.5 rounded-lg border border-red-300/50 cursor-pointer flex items-center gap-1.5";
+                    }
+                    if (closeBtn) closeBtn.classList.add('hidden-element');
+                    if (titleEl) titleEl.innerText = data.status === 'trial' ? "Hết thời gian dùng thử (10 ngày)" : "Hết hạn bản quyền (365 ngày)";
+                    if (descEl) descEl.innerHTML = `Thời gian sử dụng của bạn đã kết thúc. Vui lòng nhập mật khẩu bản quyền để kích hoạt sử dụng trong <strong>365 ngày</strong> tiếp theo.`;
+                    if (modal) modal.classList.remove('hidden-element');
+                    return false;
+                } else {
+                    // Còn hạn sử dụng
+                    if (badge) {
+                        if (data.status === 'activated') {
+                            badge.innerHTML = `<span>✅ Bản quyền: còn ${remainingDays} ngày</span>`;
+                            badge.className = "text-xs font-bold bg-emerald-500/30 hover:bg-emerald-500/40 text-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-300/40 transition-colors cursor-pointer hidden sm:flex items-center gap-1.5";
+                        } else {
+                            badge.innerHTML = `<span>⏳ Dùng thử: còn ${remainingDays} ngày</span>`;
+                            badge.className = "text-xs font-bold bg-amber-400/20 hover:bg-amber-400/30 text-amber-100 px-3 py-1.5 rounded-lg border border-amber-300/40 transition-colors cursor-pointer hidden sm:flex items-center gap-1.5";
+                        }
+                    }
+                    return true;
+                }
+            };
+
+            window.openLicenseModalManual = function() {
+                const data = getLicenseData();
+                const remainingDays = Math.max(0, Math.ceil((data.expireTime - Date.now()) / MS_PER_DAY));
+                const modal = document.getElementById('license-modal');
+                const closeBtn = document.getElementById('close-license-btn');
+                const titleEl = document.getElementById('license-modal-title');
+                const descEl = document.getElementById('license-modal-desc');
+                const errEl = document.getElementById('license-error-msg');
+                const inputEl = document.getElementById('license-password-input');
+
+                if (errEl) errEl.classList.add('hidden-element');
+                if (inputEl) inputEl.value = '';
+                if (remainingDays > 0 && closeBtn) closeBtn.classList.remove('hidden-element');
+
+                if (data.status === 'activated') {
+                    titleEl.innerText = "Thông tin Bản quyền";
+                    descEl.innerHTML = `Phần mềm đã được kích hoạt bản quyền (còn <strong>${remainingDays} ngày</strong>). Bạn có thể nhập lại mật khẩu nếu muốn gia hạn làm mới đủ <strong>365 ngày</strong>.`;
+                } else {
+                    titleEl.innerText = "Kích hoạt Bản quyền 365 ngày";
+                    descEl.innerHTML = `Bạn đang ở chế độ dùng thử (còn <strong>${remainingDays}/10 ngày</strong>). Nhập mật khẩu ngay để mở khóa bản quyền <strong>365 ngày</strong>.`;
+                }
+                modal.classList.remove('hidden-element');
+            };
+
+            window.closeLicenseModal = function() {
+                if (window.checkAppLicense()) {
+                    document.getElementById('license-modal').classList.add('hidden-element');
+                }
+            };
+
+            window.verifyLicensePassword = function() {
+                const inputEl = document.getElementById('license-password-input');
+                const errEl = document.getElementById('license-error-msg');
+                const val = (inputEl.value || '').trim();
+
+                if (val === PASS_KEY) {
+                    const activatedData = {
+                        status: 'activated',
+                        startTime: Date.now(),
+                        expireTime: Date.now() + FULL_DAYS * MS_PER_DAY
+                    };
+                    try {
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(activatedData));
+                    } catch (e) {}
+                    if (errEl) errEl.classList.add('hidden-element');
+                    document.getElementById('license-modal').classList.add('hidden-element');
+                    window.checkAppLicense();
+                    alert('Kích hoạt thành công! Bạn có 365 ngày sử dụng phần mềm.');
+                } else {
+                    if (errEl) errEl.classList.remove('hidden-element');
+                    inputEl.focus();
+                }
+            };
+
+            document.addEventListener('DOMContentLoaded', () => {
+                window.checkAppLicense();
+                // Kiểm tra định kỳ mỗi 1 phút
+                setInterval(window.checkAppLicense, 60000);
+            });
+        })();
+    </script>
 
     <!-- NẠP DỮ LIỆU CÁC KHỐI KTPL -->
     <script src="data_khoi10.js"></script>
