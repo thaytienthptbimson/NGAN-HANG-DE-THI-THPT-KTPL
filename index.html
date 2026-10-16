@@ -20,7 +20,6 @@
         .wrong-ans-text { color: #991b1b !important; }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #a78bfa; border-radius: 10px; }
-        /* Tông màu Tím/Xanh Dương phù hợp môn Pháp luật/Kinh tế */
         .glass-header { background: linear-gradient(90deg, #4c1d95 0%, #6d28d9 50%, #4c1d95 100%); box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
     </style>
 </head>
@@ -39,7 +38,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
                 </svg>
-                50:00
+                45:00
             </div>
         </div>
     </header>
@@ -47,14 +46,14 @@
     <!-- Main Content Layout -->
     <div class="max-w-[1500px] mx-auto w-full flex-grow flex flex-col lg:flex-row p-4 gap-6 items-start mt-4 mb-8">
         <!-- Sidebar -->
-        <aside class="w-full lg:w-[320px] flex-shrink-0 bg-white rounded-2xl shadow-sm border border-gray-200 lg:sticky lg:top-[85px] z-20 overflow-hidden">
+        <aside class="w-full lg:w-[340px] flex-shrink-0 bg-white rounded-2xl shadow-sm border border-gray-200 lg:sticky lg:top-[85px] z-20 overflow-hidden">
             <div class="bg-violet-50/80 p-4 border-b border-gray-200 flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-violet-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                 </svg>
                 <h2 class="text-base font-bold text-violet-900 uppercase tracking-wide" id="sidebar-title">Danh mục</h2>
             </div>
-            <div id="sidebar-container" class="max-h-[30vh] lg:max-h-[calc(100vh-200px)] overflow-y-auto custom-scrollbar bg-gray-50/30 p-2"></div>
+            <div id="sidebar-container" class="max-h-[35vh] lg:max-h-[calc(100vh-200px)] overflow-y-auto custom-scrollbar bg-gray-50/30 p-2"></div>
         </aside>
 
         <!-- Main Workspace -->
@@ -66,13 +65,13 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                     </svg>
                 </div>
-                <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-3">Hệ thống Luyện thi Tốt nghiệp THPT môn KTPL</h2>
-                <p class="text-gray-600 font-medium text-base mb-4 max-w-lg">Phần mềm cung cấp 2 dạng bài tập bám sát cấu trúc đề thi Giáo dục Kinh tế và Pháp luật mới nhất: Trắc nghiệm khách quan & Trắc nghiệm Đúng/Sai.</p>
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-3">Hệ thống Luyện thi Tốt nghiệp THPT môn GDKT & PL</h2>
+                <p class="text-gray-600 font-medium text-base mb-4 max-w-lg">Phần mềm cung cấp hệ thống câu hỏi ôn tập theo chủ đề (Lớp 10, 11, 12) và 10 Đề thi thử bám sát cấu trúc đề thi Tốt nghiệp THPT mới nhất.</p>
                 <div class="inline-flex items-center gap-2 bg-violet-50 text-violet-700 px-4 py-2 rounded-lg text-sm font-medium border border-violet-100">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clip-rule="evenodd" />
                     </svg>
-                    Vui lòng chọn khối lớp hoặc đề thi thử ở menu bên trái để bắt đầu.
+                    Vui lòng chọn chuyên đề hoặc đề thi thử ở danh mục bên trái để bắt đầu làm bài.
                 </div>
             </div>
 
@@ -109,12 +108,12 @@
                 </div>
                 <h2 class="text-3xl md:text-4xl font-black text-green-600 mb-2">Hoàn thành bài thi!</h2>
                 <div class="bg-gradient-to-b from-violet-50 to-white border border-violet-100 rounded-3xl p-8 max-w-2xl mx-auto my-8 shadow-lg">
-                    <p class="text-gray-600 text-lg font-medium mb-2">Điểm số của bạn</p>
+                    <p class="text-gray-600 text-lg font-medium mb-2">Điểm số của bạn (Thang điểm 10)</p>
                     <div class="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-600 mb-6 drop-shadow-sm" id="score-display">0/10</div>
-                    <p class="text-gray-500 mb-2 font-medium bg-white/60 inline-block px-4 py-2 rounded-lg">Lướt lên trên để xem chi tiết đáp án (màu xanh là đúng, đỏ là sai).</p>
+                    <p class="text-gray-500 mb-2 font-medium bg-white/60 inline-block px-4 py-2 rounded-lg">Cuộn lên trên để đối chiếu chi tiết từng câu (Khung màu xanh là đáp án đúng, màu đỏ là chọn sai).</p>
                 </div>
                 <button onclick="continueAfterResult()" class="bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-10 text-lg rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all">
-                    Trở về Danh mục
+                    Xem lại bài làm
                 </button>
             </div>
         </main>
